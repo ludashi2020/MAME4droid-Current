@@ -44,10 +44,6 @@
 
 package com.seleuco.mame4droid.prefs;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -66,7 +62,6 @@ import android.preference.PreferenceScreen;
 
 import com.seleuco.mame4droid.Emulator;
 import com.seleuco.mame4droid.R;
-import com.seleuco.mame4droid.helpers.MainHelper;
 import com.seleuco.mame4droid.helpers.PrefsHelper;
 import com.seleuco.mame4droid.helpers.ScraperHelper;
 import com.seleuco.mame4droid.input.ControlCustomizer;
@@ -102,6 +97,7 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
     protected ListPreference mPrefNavbar;
     protected EditTextPreference mPrefInstPath;
 
+	private PreferenceScreen mPrefShaderScreen;
 	protected ListPreference mPrefShader;
 
 	protected ListPreference mPrefNumProcessors;
@@ -143,8 +139,9 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 
 		mPrefNavbar = (ListPreference)getPreferenceScreen().findPreference(PrefsHelper.PREF_GLOBAL_NAVBAR_MODE);
 		mPrefInstPath = (EditTextPreference)getPreferenceScreen().findPreference(PrefsHelper.PREF_INSTALLATION_DIR);
-		mPrefShader= (ListPreference)getPreferenceScreen().findPreference(PrefsHelper.PREF_SHADER_EFFECT);
-		populateShaders(mPrefShader);
+
+		mPrefShaderScreen = (PreferenceScreen)getPreferenceScreen().findPreference(PrefsHelper.PREF_SHADERS);
+		mPrefShader = (ListPreference)getPreferenceScreen().findPreference(PrefsHelper.PREF_SHADER_EFFECT);
 
 		mPrefNumProcessors = (ListPreference)getPreferenceScreen().findPreference(PrefsHelper.PREF_EMU_NUM_PROCESSORS);
 	}
@@ -153,10 +150,9 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 	  @Override
 	    protected void onResume() {
 	        super.onResume();
-	        boolean enable;
 	        // Setup the initial values
 	        //mCheckBoxPreference.setSummary(sharedPreferences.getBoolean(key, false) ? "Disable this setting" : "Enable this setting");
-	        mPrefGlobalVideoRenderMode.setSummary("Current value is '" + mPrefGlobalVideoRenderMode.getEntry()+"'");
+		  	mPrefGlobalVideoRenderMode.setSummary("Current value is '" + mPrefGlobalVideoRenderMode.getEntry()+"'");
 
 	        mPrefResolution.setSummary("Current value is '" + mPrefResolution.getEntry()+"'");
 		    mPrefOSDResolution.setSummary("Current value is '" + mPrefOSDResolution.getEntry()+"'");
@@ -181,12 +177,14 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 	        mPrefSoundEngine.setSummary("Current value is '" + mPrefSoundEngine.getEntry()+"'");
 	        mPrefNavbar.setSummary("Current value is '" + mPrefNavbar.getEntry()+"'");
 			mPrefInstPath.setSummary("Current value is '" + mPrefInstPath.getText()+"'");
-		    mPrefShader.setSummary("Current value is '" + mPrefShader.getEntry()+"'");
 		    mPrefNumProcessors.setSummary("Current value is '" + mPrefNumProcessors.getEntry()+"'");
 
-	        // Set up a listener whenever a key changes
-	        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+			updateShaderScreen();
+			updateShaderEntries(Integer.parseInt(mPrefGlobalVideoRenderMode.getValue()));
+		  	mPrefShader.setSummary("Current value is '" + mPrefShader.getEntry()+"'");
 
+		  	// Set up a listener whenever a key changes
+	        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 	    }
 
 	    @Override
@@ -224,11 +222,14 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 	        {
 	            mPrefControllerType.setSummary("Current values is '" + mPrefControllerType.getEntry()+"'");
 	        }
-	        else if(key.equals(PrefsHelper.PREF_GLOBAL_VIDEO_RENDER_MODE))
-	        {
+			else if(key.equals(PrefsHelper.PREF_GLOBAL_VIDEO_RENDER_MODE))
+			{
 				mPrefGlobalVideoRenderMode.setSummary("Current value is '" + mPrefGlobalVideoRenderMode.getEntry()+"'");
-				boolean enable = Integer.valueOf(mPrefGlobalVideoRenderMode.getValue()).intValue() ==PrefsHelper.PREF_RENDER_GL;
-	        }
+
+				updateShaderEntries(Integer.parseInt(mPrefGlobalVideoRenderMode.getValue()));
+				mPrefShader.setValueIndex(0);
+				updateShaderScreen();
+			}
 	        else if(key.equals(PrefsHelper.PREF_EMU_RESOLUTION))
 	        {
 	        	mPrefResolution.setSummary("Current value is '" + mPrefResolution.getEntry()+"'");
@@ -295,27 +296,29 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 		    }
 			else if(key.equals(PrefsHelper.PREF_SHADER_EFFECT))
 			{
-				mPrefShader.setSummary("Current value is '" + mPrefShader.getEntry()+"'");
+				String entry = mPrefShader.getEntry().toString();
+				mPrefShader.setSummary("Current value is '" + entry + "'");
 			}
 			else if(key.equals(PrefsHelper.PREF_SHADERS_ENABLED))
 			{
-				SharedPreferences.Editor edit = sharedPreferences.edit();
+				//SharedPreferences.Editor edit = sharedPreferences.edit();
 				boolean enable = sharedPreferences.getBoolean(PrefsHelper.PREF_SHADERS_ENABLED,false);
 
 				android.app.UiModeManager u = (android.app.UiModeManager) this.getSystemService(Context.UI_MODE_SERVICE);
 				boolean androidTv  = u.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
 
 				if(enable){
-					edit.putString(PrefsHelper.PREF_EMU_RESOLUTION, "0");
+					//edit.putString(PrefsHelper.PREF_EMU_RESOLUTION, "0");
 					//if(!androidTv)
 					  //edit.putString(PrefsHelper.PREF_EMU_RESOLUTION_OSD, "0");
 				}
 				else{
-					edit.putString(PrefsHelper.PREF_EMU_RESOLUTION, "1");
+					//edit.putString(PrefsHelper.PREF_EMU_RESOLUTION, "1");
 					//if(!androidTv)
 					   //edit.putString(PrefsHelper.PREF_EMU_RESOLUTION_OSD, "1");
 				}
-				edit.commit();
+				mPrefShader.setEnabled(enable);
+				//edit.commit();
 			}
 			else if(key.equals(PrefsHelper.PREF_SCRAPE_ICONS) ||
 				key.equals(PrefsHelper.PREF_SCRAPE_SNAPSHOTS) ||
@@ -326,7 +329,6 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 			{
 				mPrefNumProcessors.setSummary("Current value is '" + mPrefNumProcessors.getEntry()+"'");
 			}
-
 	    }
 
 		@Override
@@ -459,36 +461,30 @@ public class UserPreferences extends PreferenceActivity implements OnSharedPrefe
 			finish();
 		}
 
-		protected void populateShaders(ListPreference lp){
+	/**
+	 * Update shader effects entries with current selected renderer supported shaders
+	 */
+	private void updateShaderEntries(int renderer) {
+		String[] origShaders = Emulator.getShaders(renderer);
 
-			CharSequence[] cs = null;
-			CharSequence[] csv = null;
+		String[] shaders = new String[origShaders.length+1];
+		shaders[0] = "none";
 
-			MainHelper mh = new MainHelper(null);
-
-			String path = getPreferenceScreen().getSharedPreferences().getString(
-				PrefsHelper.PREF_INSTALLATION_DIR, "");
-
-			ArrayList<ArrayList<String>> data = mh.readShaderCfg(path);
-
-			int n = data.size();
-
-			cs = new String[n + 1];
-			csv = new String[n + 1];
-
-			cs[0] = "No effect";
-			csv[0] = "-1";
-
-			int i = 0;
-			while (i < n) {
-				ArrayList<String> s = data.get(i);
-				if(s.size() >= 2) {
-					csv[i + 1] = s.get(0);
-					cs[i + 1] = s.get(1);
-				}
-				i++;
-			}
-			lp.setEntries(cs);
-			lp.setEntryValues(csv);
+		if (origShaders.length != 0) {
+			System.arraycopy(origShaders, 0, shaders, 1, origShaders.length);
 		}
+
+		mPrefShader.setEntries(shaders);
+		mPrefShader.setEntryValues(shaders);
+	}
+
+	private void updateShaderScreen() {
+		if (mPrefGlobalVideoRenderMode.getEntry().equals("Software")) {
+			mPrefShaderScreen.setSummary("Effect shaders are not supported by Software renderer");
+			mPrefShaderScreen.setEnabled(false);
+		} else {
+			mPrefShaderScreen.setSummary("Select it to configure advanced postprocessing effects");
+			mPrefShaderScreen.setEnabled(true);
+		}
+	}
 }

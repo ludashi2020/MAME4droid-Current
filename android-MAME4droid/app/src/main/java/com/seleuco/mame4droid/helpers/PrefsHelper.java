@@ -84,10 +84,9 @@ public class PrefsHelper implements OnSharedPreferenceChangeListener {
 	final static public String PREF_GLOBAL_DEBUG = "PREF_GLOBAL_DEBUG";
 	final static public String PREF_GLOBAL_WARN_ON_EXIT = "PREF_GLOBAL_WARN_ON_EXIT";
 
+	final static public String PREF_SHADERS = "shaders";
 	final static public String PREF_SHADERS_ENABLED = "PREF_SHADERS_ENABLED";
 	final static public String PREF_SHADER_EFFECT = "PREF_SHADER_EFFECT";
-	final static public String PREF_SHADER_IN_FRONTEND = "PREF_SHADER_IN_FRONTEND";
-	final static public String PREF_SHADER_30 = "PREF_SHADER_30";
 
 	final static public String PREF_SCRAPE_ENABLED = "PREF_SCRAPE_ENABLED";
 	final static public String PREF_SCRAPE_ICONS = "PREF_SCRAPE_ICONS";
@@ -153,8 +152,6 @@ public class PrefsHelper implements OnSharedPreferenceChangeListener {
 	final static public String PREF_MAIN_THREAD_PRIORITY = "PREF_MAIN_THREAD_PRIORITY";
 	final static public String PREF_SOUND_ENGINE = "PREF_SOUND_ENGINE";
 
-	final static public String PREF_DOUBLE_BUFFER = "PREF_DOUBLE_BUFFER";
-
 	final static public String PREF_FORCE_ALTGLPATH = "PREF_FORCE_ALTGLPATH";
 	final static public String PREF_PXASP1 = "PREF_PXASP1";
 	final static public String PREF_NODEADZONEANDSAT = "PREF_NODEADZONEANDSAT";
@@ -179,8 +176,6 @@ public class PrefsHelper implements OnSharedPreferenceChangeListener {
 	final static public int LOW = 1;
 	final static public int NORMAL = 2;
 	final static public int HIGHT = 2;
-
-	final static public int PREF_RENDER_GL = 1;
 
 	final static public int PREF_DIGITAL_DPAD = 1;
 	final static public int PREF_DIGITAL_STICK = 2;
@@ -626,10 +621,6 @@ public class PrefsHelper implements OnSharedPreferenceChangeListener {
 		return Integer.valueOf(getSharedPreferences().getString(PREF_SOUND_ENGINE, "1")).intValue();
 	}
 
-	public boolean isDoubleBuffer() {
-		return getSharedPreferences().getBoolean(PREF_DOUBLE_BUFFER, true);
-	}
-
 	public boolean isAltGLPath() {
 		return getSharedPreferences().getBoolean(PREF_FORCE_ALTGLPATH, false);
 	}
@@ -732,19 +723,11 @@ public class PrefsHelper implements OnSharedPreferenceChangeListener {
 	}
 
 	public String getShaderEffectSelected() {
-		return getSharedPreferences().getString(PREF_SHADER_EFFECT, "-1");
+		return getSharedPreferences().getString(PREF_SHADER_EFFECT, "none");
 	}
 
 	public boolean isShadersEnabled() {
 		return getSharedPreferences().getBoolean(PREF_SHADERS_ENABLED, false);
-	}
-
-	public boolean isShadersUsedInFrontend() {
-		return getSharedPreferences().getBoolean(PREF_SHADER_IN_FRONTEND, false);
-	}
-
-	public boolean isShadersAs30() {
-		return getSharedPreferences().getBoolean(PREF_SHADER_30, false);
 	}
 
 	public boolean isScrapingEnabled() {
