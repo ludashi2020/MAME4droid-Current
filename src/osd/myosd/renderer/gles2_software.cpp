@@ -11,7 +11,7 @@
 
 #include "gles2_software.h"
 #include "gl_utils.hxx"
-#include "emu/rendersw.hxx"
+#include "rendersw.hxx"
 
 #include <stdexcept>
 

@@ -13,8 +13,8 @@
 #ifndef MYOSD_RENDERER
 #define MYOSD_RENDERER
 
-#include "emu/emucore.h"
-#include "emu/render.h"
+#include "emucore.h"
+#include "render.h"
 
 #include <string>
 #include <vector>

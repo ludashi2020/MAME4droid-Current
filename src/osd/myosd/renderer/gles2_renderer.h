@@ -17,7 +17,7 @@
 
 #include "filter_shader.h"
 
-#include "osd/osdcore.h"
+#include "osdcore.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

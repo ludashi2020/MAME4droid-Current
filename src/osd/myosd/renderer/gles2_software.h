@@ -14,7 +14,7 @@
 #define GLES2_SOFTWARE_H
 
 #include "myosd_renderer.h"
-#include "emu/render.h"
+#include "render.h"
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

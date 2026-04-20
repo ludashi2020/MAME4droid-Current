@@ -13,7 +13,7 @@
 
 #include "shader_sources.hxx"
 
-#include "osd/modules/render/copyutil.h"
+#include "modules/render/copyutil.h"
 
 #include <string>
 #include <stdexcept>
