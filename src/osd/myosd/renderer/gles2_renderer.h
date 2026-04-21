@@ -60,8 +60,8 @@ public:
 		u32 prim_flags;  //Copy of the render_primitive flags
 		osd_ticks_t last_access;
 
-		void* base; //GL_ARGB format
-		bool owned; //Do we own the raw data pointer, or is it a direct reference to textinfo.base?
+		void* base = nullptr;; //GL_ARGB format
+		bool owned = false; //Do we own the raw data pointer, or is it a direct reference to textinfo.base?
 
         gles2_texture() = default;
 

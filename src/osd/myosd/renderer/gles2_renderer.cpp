@@ -278,6 +278,7 @@ void gles2_renderer::render(const render_primitive_list& primlist)
 				}
 				else
 				{
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, s_quad_indices);
 				}
 
