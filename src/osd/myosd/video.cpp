@@ -25,6 +25,8 @@
 #include "renderer/gles2_renderer.h"
 #include "renderer/gles1_renderer.h"
 
+#include <android/log.h>
+
 #include <mutex>
 #include <vector>
 
@@ -36,6 +38,8 @@ int myosd_zoom_to_window;
 //GLES2 renderer related stuff
 static std::mutex rend_mutex;
 static render_primitive_list *primlist = nullptr;
+
+#define ANDROID_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "GLRENDERER", __VA_ARGS__)
 
 //============================================================
 //  video_init
@@ -179,43 +183,66 @@ enum
 
 static myosd_renderer* my_renderer = nullptr;
 static int current_renderer = SW_RENDERER;
+static int old_width, old_height;
 
-extern "C" void myosd_video_onSetRenderer(int renderer)
+void myosd_video_createRenderer(int renderer)
+{
+    old_width = 0;
+    old_height = 0;
+
+    ANDROID_LOG("create renderer %d",renderer);
+
+    current_renderer = renderer;
+
+    switch (current_renderer)
+    {
+        case SW_RENDERER:
+            my_renderer = new gles1_renderer(min_width, min_height);
+            break;
+
+        case NATIVE_RENDERER:
+            my_renderer = new gles2_renderer(min_width, min_height);
+            break;
+        default:
+            ANDROID_LOG("Error create renderer: Renderer %d not found!", current_renderer);
+            // Safety fallback: load the software renderer by default to prevent crashes
+            my_renderer = new gles1_renderer(min_width, min_height);
+            current_renderer = SW_RENDERER; // Sync the state variable
+            break;
+    }
+}
+
+extern "C" void myosd_video_setRenderer(int renderer)
 {
 	std::lock_guard lock(rend_mutex);
-	current_renderer = renderer;
 
 	if (my_renderer)
 		delete my_renderer;
 
-	switch (current_renderer)
-	{
-		case SW_RENDERER:
-			my_renderer = new gles1_renderer(min_width, min_height);
-		break;
-
-		case NATIVE_RENDERER:
-			my_renderer = new gles2_renderer(min_width, min_height);
-		break;
-	}
+    myosd_video_createRenderer(renderer);
 }
 
-static int old_width, old_height;
-extern "C" void myosd_video_onDrawFrame()
+extern "C" int myosd_video_onDrawFrame(int renderer)
 {
 	std::lock_guard lock(rend_mutex);
 
-	if (my_renderer && primlist)
+    if(my_renderer == nullptr) {
+        myosd_video_createRenderer(renderer);
+    }
+
+    if(primlist == nullptr)
+        return -1;
+
+    if (min_width != old_width || min_height != old_height)
 	{
-		if (min_width != old_width || min_height != old_height)
-		{
-			old_width = min_width; old_height = min_height;
+		old_width = min_width; old_height = min_height;
 
-			my_renderer->on_emulatedsize_change(min_width, min_height);
-		}
-
-		my_renderer->render(*primlist);
+		my_renderer->on_emulatedsize_change(min_width, min_height);
 	}
+
+	my_renderer->render(primlist);
+
+    return 0;
 }
 
 extern "C" void myosd_video_getShaders(const char*** list, int* n)
@@ -264,6 +291,6 @@ extern "C" bool myosd_video_setShader(const char* shader_name)
 
 extern "C" void myosd_video_loadShaders(const char* path)
 {
-    //FlykeSpice: load effect shaders for gles2 renderer
+    // load effect shaders for gles2 renderer
     gles2_renderer::load_shaders(path);
 }

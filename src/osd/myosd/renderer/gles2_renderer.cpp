@@ -197,7 +197,7 @@ void gles2_renderer::set_blendmode(int blendmode)
 	}
 }
 
-void gles2_renderer::render(const render_primitive_list& primlist)
+void gles2_renderer::render(const render_primitive_list* primlist)
 {
     if (m_force_viewport_update)
     {
@@ -224,7 +224,7 @@ void gles2_renderer::render(const render_primitive_list& primlist)
     }
 
 	//TODO: Batch many primitives that share the same properties (format, colors..) into a single draw call
-	for (const render_primitive& prim : primlist)
+	for (const render_primitive& prim : *primlist)
 	{
 		switch (prim.type)
 		{

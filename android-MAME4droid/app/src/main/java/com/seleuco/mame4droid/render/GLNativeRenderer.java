@@ -65,7 +65,9 @@ public final class GLNativeRenderer implements Renderer, IGLRenderer {
 
 	private MAME4droid mm;
 	private PrefsHelper prefsHelper;
+	private boolean init = false;
 	private String oldEffect;
+
 	/**
 	 * Sets the MAME4droid instance for the renderer.
 	 * @param mm The MAME4droid application instance.
@@ -111,16 +113,13 @@ public final class GLNativeRenderer implements Renderer, IGLRenderer {
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 		//Call JNI method to do initialization stuff
 		Log.d("GLRENDERER", "onSurfaceCreated called");
-		Emulator.loadShaders(mm.getMainHelper().getInstallationDIR());
-		Emulator.onSetRenderer(Emulator.RENDERER_GL_NATIVE);
-		Emulator.setShader(oldEffect.equals("none") ? null : oldEffect);
+		Emulator.setRenderer(Emulator.RENDERER_GL_NATIVE);
 	}
 
 	@Override
 	public void onSurfaceChanged(GL10 gl, int w, int h) {
 		Log.d("GLRENDERER", "onSurfaceChanged called");
 		GLES20.glViewport(0, 0, w, h);
-		//Emulator.onSetRenderer(Emulator.RENDERER_GL_NATIVE);
 		//This is called when you exit from the Preferences screen
 		updateShaderEffect();
 	}
@@ -128,6 +127,18 @@ public final class GLNativeRenderer implements Renderer, IGLRenderer {
 	@Override
 	public void onDrawFrame(GL10 gl) {
 		//Call JNI method to do GLES rendering on native side
-		Emulator.onDrawFrame();
+		int res = Emulator.onDrawFrame(Emulator.RENDERER_GL_NATIVE);
+		if(res==-1)
+		{
+			gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			//gl.glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+			gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		}
+		else if(!init)
+		{
+			Emulator.loadShaders(mm.getMainHelper().getInstallationDIR());
+			Emulator.setShader(oldEffect.equals("none") ? null : oldEffect);
+			init = true;
+		}
 	}
 }

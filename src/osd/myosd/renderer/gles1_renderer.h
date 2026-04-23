@@ -26,7 +26,7 @@ class gles1_renderer : public myosd_renderer
         public:
         gles1_renderer(int width, int height);
 
-        void render(const render_primitive_list& primlist) override;
+        void render(const render_primitive_list* primlist) override;
         void on_emulatedsize_change(int width, int height) override;
 
         //Shaders not supported by software renderer..

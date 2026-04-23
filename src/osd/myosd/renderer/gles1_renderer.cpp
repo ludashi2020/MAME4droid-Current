@@ -62,12 +62,12 @@ gles1_renderer::gles1_renderer(int width, int height)
     on_emulatedsize_change(width, height);
 }
 
-void gles1_renderer::render(const render_primitive_list& primlist)
+void gles1_renderer::render(const render_primitive_list* primlist)
 {
     //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     //glClear(GL_COLOR_BUFFER_BIT);
 
-    software_renderer<uint32_t, 0, 0, 0, 0, 8, 16>::draw_primitives(primlist, m_screenbuff, m_width, m_height, m_pitch);
+    software_renderer<uint32_t, 0, 0, 0, 0, 8, 16>::draw_primitives(*primlist, m_screenbuff, m_width, m_height, m_pitch);
 
     glBindTexture(GL_TEXTURE_2D, m_texture_id);
 

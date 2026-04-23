@@ -63,8 +63,8 @@ int  (*setMouseData)(int i, int mouseAction, int button, float x, float y)=NULL;
 int  (*setTouchData)(int i, int touchAction, float x, float y)=NULL;
 
 void (*onSurfaceCreated)(void) = NULL;
-void (*onDrawFrame)(void) = NULL;
-void (*onSetRenderer)(int) = NULL;
+int (*onDrawFrame)(int) = NULL;
+int (*setRenderer)(int) = NULL;
 
 void (*getShaders)(const char***, int*) = NULL;
 bool (*setShader)(const char*) = NULL;
@@ -163,8 +163,8 @@ static void load_lib(const char *str)
     onDrawFrame = dlsym(libdl, "myosd_video_onDrawFrame");
     __android_log_print(ANDROID_LOG_DEBUG, "mame4droid-jni", "myosd_video_onDrawFrame %d\n", onDrawFrame != NULL);
 
-    onSetRenderer = dlsym(libdl, "myosd_video_onSetRenderer");
-    __android_log_print(ANDROID_LOG_DEBUG, "mame4droid-jni", "myosd_video_onSetRenderer %d\n", onSetRenderer != NULL);
+    setRenderer = dlsym(libdl, "myosd_video_setRenderer");
+    __android_log_print(ANDROID_LOG_DEBUG, "mame4droid-jni", "myosd_video_setRenderer %d\n", setRenderer != NULL);
 
     setShader = dlsym(libdl, "myosd_video_setShader");
     __android_log_print(ANDROID_LOG_DEBUG, "mame4droid-jni", "myosd_video_setShader %d\n", setShader != NULL);
@@ -712,25 +712,38 @@ JNIEXPORT jint JNICALL Java_com_seleuco_mame4droid_Emulator_setTouchData
     return 0;
 }
 
-JNIEXPORT void JNICALL Java_com_seleuco_mame4droid_Emulator_onDrawFrame
-	(JNIEnv* env, jclass c)
+JNIEXPORT int JNICALL Java_com_seleuco_mame4droid_Emulator_onDrawFrame
+	(JNIEnv* env, jclass c, jint renderer)
 {
-    if (onDrawFrame != NULL)
-	    onDrawFrame();
+    if (onDrawFrame != NULL) {
+        return onDrawFrame(renderer);
+    }
+    else {
+        return -1;
+    }
 }
 
-JNIEXPORT void JNICALL Java_com_seleuco_mame4droid_Emulator_onSetRenderer
+JNIEXPORT int JNICALL Java_com_seleuco_mame4droid_Emulator_setRenderer
         (JNIEnv* env, jclass c, jint renderer)
 {
-    if (onSetRenderer != NULL)
-        onSetRenderer(renderer);
+    if (setRenderer != NULL) {
+        setRenderer(renderer);
+        return 0;
+    }
+    else {
+        return -1;
+    }
 }
 
 JNIEXPORT jobjectArray JNICALL Java_com_seleuco_mame4droid_Emulator_getShaders
         (JNIEnv* env, jclass c)
 {
-    const char** shader_list;
-    int n;
+    if (getShaders == NULL) {
+        return (*env)->NewObjectArray(env, 0, (*env)->FindClass(env, "java/lang/String"), NULL);
+    }
+
+    const char** shader_list = NULL;
+    int n = 0;
 
     getShaders(&shader_list, &n);
 
@@ -739,6 +752,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_seleuco_mame4droid_Emulator_getShaders
     {
         jstring str = (*env)->NewStringUTF(env, shader_list[i]);
         (*env)->SetObjectArrayElement(env, array, i, str);
+
+        // Opcional pero buena práctica: liberar la memoria local del string
+        (*env)->DeleteLocalRef(env, str);
     }
 
     return array;
@@ -747,6 +763,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_seleuco_mame4droid_Emulator_getShaders
 JNIEXPORT jboolean JNICALL Java_com_seleuco_mame4droid_Emulator_setShader
         (JNIEnv* env, jclass c, jstring shader_name)
 {
+    if (setShader == NULL) {
+        return JNI_FALSE;
+    }
+
     bool ret;
     if (shader_name == NULL)
     {
@@ -759,20 +779,30 @@ JNIEXPORT jboolean JNICALL Java_com_seleuco_mame4droid_Emulator_setShader
         (*env)->ReleaseStringUTFChars(env, shader_name, temp);
     }
 
-    return ret;
+    return ret ? JNI_TRUE : JNI_FALSE;
 }
 
-JNIEXPORT void JNICALL Java_com_seleuco_mame4droid_Emulator_loadShaders
+JNIEXPORT jint JNICALL Java_com_seleuco_mame4droid_Emulator_loadShaders
         (JNIEnv* env, jclass c, jstring path)
 {
-    static bool loaded = false;
-
-    if (!loaded)
-    {
-        const char *temp = (*env)->GetStringUTFChars(env, path, NULL);
-        loadShaders(temp);
-        (*env)->ReleaseStringUTFChars(env, path, temp);
-
-        loaded = true;
+    if (loadShaders == NULL) {
+        return -1;
     }
+
+    static bool loaded = false;
+    if (loaded) {
+        return 0;
+    }
+
+    if (path == NULL) {
+        return -1;
+    }
+
+    const char *temp = (*env)->GetStringUTFChars(env, path, NULL);
+    loadShaders(temp);
+    (*env)->ReleaseStringUTFChars(env, path, temp);
+
+    loaded = true;
+
+    return 0;
 }

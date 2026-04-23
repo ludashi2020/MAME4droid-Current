@@ -24,7 +24,7 @@
 class myosd_renderer
 {
 public:
-	virtual void render(const render_primitive_list& primlist) = 0;
+	virtual void render(const render_primitive_list* primlist) = 0;
 	virtual void on_emulatedsize_change(int width, int height) = 0;
 
 	//FlykeSpice: Can't be virtual because they are static members...
